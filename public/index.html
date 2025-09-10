@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>File Downloader</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #000;
+      color: white;
+    }
+
+    .container {
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 100px;
+      font-size: 50px;
+      letter-spacing: 2px;
+      color: #6ec850eb;
+    }
+
+    .card-group {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .card {
+      position: relative;
+      width: 250px;
+      height: 350px;
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+    }
+
+    .card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 30px;
+    font-weight: bold;
+    color: white;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(0,0,0,0.8);  /* bayangan biar jelas */
+    border-radius: 6px;
+    }
+
+    #results {
+      margin-top: 30px;
+      font-size: 18px;
+      color: white;
+    }
+
+    #backButton {
+      display: none;
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="menu">
+      <h1>Tes API Server punyanya L0123067</h1>
+      <div class="card-group">
+        <div class="card" onclick="downloadFile('10kb.html', '10 KB')">
+          <img src="background.jpeg" alt="10KB" />
+          <span>10 KB</span>
+        </div>
+        <div class="card" onclick="downloadFile('100kb.html', '100 KB')">
+          <img src="background.jpeg" alt="100KB" />
+          <span>100 KB</span>
+        </div>
+        <div class="card" onclick="downloadFile('1mb.html', '1 MB')">
+          <img src="background.jpeg" alt="1MB" />
+          <span>1 MB</span>
+        </div>
+        <div class="card" onclick="downloadFile('5mb.html', '5 MB')">
+          <img src="background.jpeg" alt="5MB" />
+          <span>5 MB</span>
+        </div>
+        <div class="card" onclick="downloadFile('10mb.html', '10 MB')">
+          <img src="background.jpeg" alt="10MB" />
+          <span>10 MB</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="results" style="display: none">
+      <h2>Hasil Pengujian</h2>
+      <p id="resultText"></p>
+      <button id="backButton" onclick="showMenu()">Kembali ke Menu</button>
+    </div>
+  </div>
+
+  <script>
+    const apiUrl = "http://localhost:3000/download/";
+
+    const menuDiv = document.getElementById("menu");
+    const resultsDiv = document.getElementById("results");
+    const resultText = document.getElementById("resultText");
+    const backButton = document.getElementById("backButton");
+
+    async function downloadFile(filename, fileSize) {
+      const startTime = performance.now();
+      try {
+        const response = await fetch(apiUrl + filename);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+
+        // Auto-download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+        const endTime = performance.now();
+        const duration = (endTime - startTime).toFixed(2);
+
+        const speedBps = (blob.size * 8) / (duration / 1000);
+        const speedKbps = (speedBps / 1024).toFixed(2);
+        const speedMbps = (speedKbps / 1024).toFixed(2);
+
+        resultText.innerHTML = `
+          File: <strong>${fileSize}</strong><br>
+          Waktu Unduh (Runtime): <strong>${duration} ms</strong><br>
+          Ukuran Aktual: <strong>${(blob.size / 1024).toFixed(2)} KB</strong><br>
+          Kecepatan: <strong>${speedMbps} Mbps</strong>
+        `;
+      } catch (error) {
+        console.error("Fetch error:", error);
+        resultText.textContent = "Gagal mengunduh file. Pastikan server API berjalan.";
+      } finally {
+        menuDiv.style.display = "none";
+        resultsDiv.style.display = "block";
+        backButton.style.display = "inline-block";
+      }
+    }
+
+    function showMenu() {
+      menuDiv.style.display = "block";
+      resultsDiv.style.display = "none";
+    }
+  </script>
+</body>
+</html>
